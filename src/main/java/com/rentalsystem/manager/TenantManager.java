@@ -1,13 +1,15 @@
 package com.rentalsystem.manager;
 
-import com.rentalsystem.model.Tenant;
 import java.util.List;
+
+import com.rentalsystem.model.Tenant;
 
 public interface TenantManager {
     void addTenant(Tenant tenant);
     void updateTenant(Tenant tenant);
-    void deleteTenant(String tenantId);
-    Tenant getTenant(String tenantId);
+    void deleteTenant(String id);
+    Tenant getTenant(String id);
     List<Tenant> getAllTenants();
     List<Tenant> searchTenants(String keyword);
+    boolean isEmailTaken(String email);
 }

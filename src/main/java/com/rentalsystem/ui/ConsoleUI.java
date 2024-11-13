@@ -1,21 +1,42 @@
 package com.rentalsystem.ui;
 
-import com.rentalsystem.manager.*;
-import com.rentalsystem.model.*;
-import com.rentalsystem.util.DateUtil;
-import com.rentalsystem.util.InputValidator;
-import com.rentalsystem.util.FileHandler;
-import org.jline.reader.*;
-import org.jline.reader.impl.completer.*;
-import org.jline.terminal.*;
-import org.jline.utils.*;
-
 import java.io.IOException;
-import java.text.ParseException;
-import java.util.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
+import com.rentalsystem.manager.HostManager;
+import com.rentalsystem.manager.HostManagerImpl;
+import com.rentalsystem.manager.OwnerManager;
+import com.rentalsystem.manager.OwnerManagerImpl;
+import com.rentalsystem.manager.PropertyManager;
+import com.rentalsystem.manager.PropertyManagerImpl;
+import com.rentalsystem.manager.RentalManager;
+import com.rentalsystem.manager.RentalManagerImpl;
+import com.rentalsystem.manager.TenantManager;
+import com.rentalsystem.manager.TenantManagerImpl;
+import com.rentalsystem.model.CommercialProperty;
+import com.rentalsystem.model.Host;
+import com.rentalsystem.model.Owner;
+import com.rentalsystem.model.Property;
+import com.rentalsystem.model.RentalAgreement;
+import com.rentalsystem.model.ResidentialProperty;
+import com.rentalsystem.model.Tenant;
+import com.rentalsystem.util.DateUtil;
+import com.rentalsystem.util.FileHandler;
+import com.rentalsystem.util.InputValidator;
 
 public class ConsoleUI {
     private final RentalManager rentalManager;
@@ -562,24 +583,27 @@ public class ConsoleUI {
                 id = null;
             }
         }
-
+    
         String fullName = readUserInput("Enter full name: ");
         
         Date dateOfBirth = DateUtil.readDate(reader, "Enter date of birth (yyyy-MM-dd): ");
-
+    
         String contactInfo = null;
         while (contactInfo == null) {
             contactInfo = readUserInput("Enter contact information (email): ");
             if (!InputValidator.isValidEmail(contactInfo)) {
                 System.out.println(TableFormatter.ANSI_RED + "Invalid email format." + TableFormatter.ANSI_RESET);
                 contactInfo = null;
+            } else if (tenantManager.isEmailTaken(contactInfo)) {
+                System.out.println(TableFormatter.ANSI_RED + "This email is already in use by another tenant." + TableFormatter.ANSI_RESET);
+                contactInfo = null;
             }
         }
-
+    
         Tenant tenant = new Tenant(id, fullName, dateOfBirth, contactInfo);
         tenantManager.addTenant(tenant);
         System.out.println(TableFormatter.ANSI_GREEN + "Tenant added successfully." + TableFormatter.ANSI_RESET);
-
+    
         List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info");
         List<List<String>> data = new ArrayList<>();
         data.add(Arrays.asList(
@@ -613,15 +637,18 @@ public class ConsoleUI {
                 if (dateOfBirth != null) {
                     tenant.setDateOfBirth(dateOfBirth);
                 }
-
                 String contactInfo = readUserInput("Enter new contact information (email, press enter to keep current): ");
-                if (!contactInfo.isEmpty()) {
-                    if (InputValidator.isValidEmail(contactInfo)) {
-                        tenant.setContactInformation(contactInfo);
-                    } else {
-                        System.out.println(TableFormatter.ANSI_RED + "Invalid email format. Contact information not updated." + TableFormatter.ANSI_RESET);
-                    }
-                }
+    if (!contactInfo.isEmpty()) {
+        if (InputValidator.isValidEmail(contactInfo)) {
+            if (!contactInfo.equalsIgnoreCase(tenant.getContactInformation()) && tenantManager.isEmailTaken(contactInfo)) {
+                System.out.println(TableFormatter.ANSI_RED + "This email is already in use by another tenant. Contact information not updated." + TableFormatter.ANSI_RESET);
+            } else {
+                tenant.setContactInformation(contactInfo);
+            }
+        } else {
+            System.out.println(TableFormatter.ANSI_RED + "Invalid email format. Contact information not updated." + TableFormatter.ANSI_RESET);
+        }
+    }
 
                 tenantManager.updateTenant(tenant);
                 System.out.println(TableFormatter.ANSI_GREEN + "Tenant updated successfully." + TableFormatter.ANSI_RESET);

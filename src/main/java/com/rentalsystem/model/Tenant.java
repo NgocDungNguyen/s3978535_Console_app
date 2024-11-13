@@ -1,5 +1,6 @@
 package com.rentalsystem.model;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,13 +33,29 @@ public class Tenant extends Person {
 
     @Override
     public String toString() {
-        return "Tenant{" +
-                "id='" + getId() + '\'' +
-                ", fullName='" + getFullName() + '\'' +
-                ", dateOfBirth=" + getDateOfBirth() +
-                ", contactInformation='" + getContactInformation() + '\'' +
-                ", rentalAgreements=" + rentalAgreements.size() +
-                ", paymentTransactions=" + paymentTransactions.size() +
-                '}';
+        return String.join(",",
+            getId(),
+            getFullName(),
+            new SimpleDateFormat("yyyy-MM-dd").format(getDateOfBirth()),
+            getContactInformation()
+        );
+    }
+
+    public static Tenant fromString(String line) {
+        String[] parts = line.split(",");
+        if (parts.length != 4) {
+            throw new IllegalArgumentException("Invalid tenant data: " + line);
+        }
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            return new Tenant(
+                parts[0],
+                parts[1],
+                dateFormat.parse(parts[2]),
+                parts[3]
+            );
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid date format in tenant data: " + line, e);
+        }
     }
 }
