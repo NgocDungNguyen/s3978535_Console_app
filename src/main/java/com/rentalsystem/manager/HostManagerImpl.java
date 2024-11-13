@@ -1,9 +1,14 @@
 package com.rentalsystem.manager;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.rentalsystem.model.Host;
 import com.rentalsystem.util.FileHandler;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.rentalsystem.util.InputValidator;
 
 public class HostManagerImpl implements HostManager {
     private Map<String, Host> hosts;
@@ -22,10 +27,13 @@ public class HostManagerImpl implements HostManager {
         }
     }
 
-    @Override
+     @Override
     public void addHost(Host host) {
-        if (hosts.containsKey(host.getId())) {
-            throw new IllegalArgumentException("Host with ID " + host.getId() + " already exists.");
+        if (!InputValidator.isValidEmail(host.getContactInformation())) {
+            throw new IllegalArgumentException("Invalid email format for host: " + host.getContactInformation());
+        }
+        if (isEmailTaken(host.getContactInformation())) {
+            throw new IllegalArgumentException("Email already in use: " + host.getContactInformation());
         }
         hosts.put(host.getId(), host);
         saveHosts();
@@ -33,11 +41,23 @@ public class HostManagerImpl implements HostManager {
 
     @Override
     public void updateHost(Host host) {
-        if (!hosts.containsKey(host.getId())) {
+        if (!InputValidator.isValidEmail(host.getContactInformation())) {
+            throw new IllegalArgumentException("Invalid email format for host: " + host.getContactInformation());
+        }
+        Host existingHost = hosts.get(host.getId());
+        if (existingHost == null) {
             throw new IllegalArgumentException("Host with ID " + host.getId() + " does not exist.");
+        }
+        if (!existingHost.getContactInformation().equals(host.getContactInformation()) && isEmailTaken(host.getContactInformation())) {
+            throw new IllegalArgumentException("Email already in use: " + host.getContactInformation());
         }
         hosts.put(host.getId(), host);
         saveHosts();
+    }
+
+    private boolean isEmailTaken(String email) {
+        return hosts.values().stream()
+                .anyMatch(host -> host.getContactInformation().equalsIgnoreCase(email));
     }
 
     @Override

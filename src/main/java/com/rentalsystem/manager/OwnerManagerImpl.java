@@ -1,9 +1,14 @@
 package com.rentalsystem.manager;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.rentalsystem.model.Owner;
 import com.rentalsystem.util.FileHandler;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.rentalsystem.util.InputValidator;
 
 public class OwnerManagerImpl implements OwnerManager {
     private Map<String, Owner> owners;
@@ -24,8 +29,11 @@ public class OwnerManagerImpl implements OwnerManager {
 
     @Override
     public void addOwner(Owner owner) {
-        if (owners.containsKey(owner.getId())) {
-            throw new IllegalArgumentException("Owner with ID " + owner.getId() + " already exists.");
+        if (!InputValidator.isValidEmail(owner.getContactInformation())) {
+            throw new IllegalArgumentException("Invalid email format for owner: " + owner.getContactInformation());
+        }
+        if (isEmailTaken(owner.getContactInformation())) {
+            throw new IllegalArgumentException("Email already in use: " + owner.getContactInformation());
         }
         owners.put(owner.getId(), owner);
         saveOwners();
@@ -33,11 +41,23 @@ public class OwnerManagerImpl implements OwnerManager {
 
     @Override
     public void updateOwner(Owner owner) {
-        if (!owners.containsKey(owner.getId())) {
+        if (!InputValidator.isValidEmail(owner.getContactInformation())) {
+            throw new IllegalArgumentException("Invalid email format for owner: " + owner.getContactInformation());
+        }
+        Owner existingOwner = owners.get(owner.getId());
+        if (existingOwner == null) {
             throw new IllegalArgumentException("Owner with ID " + owner.getId() + " does not exist.");
+        }
+        if (!existingOwner.getContactInformation().equals(owner.getContactInformation()) && isEmailTaken(owner.getContactInformation())) {
+            throw new IllegalArgumentException("Email already in use: " + owner.getContactInformation());
         }
         owners.put(owner.getId(), owner);
         saveOwners();
+    }
+
+    private boolean isEmailTaken(String email) {
+        return owners.values().stream()
+                .anyMatch(owner -> owner.getContactInformation().equalsIgnoreCase(email));
     }
 
     @Override

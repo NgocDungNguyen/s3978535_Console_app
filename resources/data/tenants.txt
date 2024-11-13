@@ -5,7 +5,6 @@ T007,Robert Taylor,1986-06-11,r.taylor@email.com
 T004,Sarah Davis,1992-05-18,sarah.d@email.com
 T015,George Young,1982-11-05,g.young@email.com
 T005,David Wilson,1987-09-03,d.wilson@email.com
-T016,June,2005-10-02,haha@gmai
 T002,Emma Johnson,1990-07-22,emma.j@email.com
 T013,Daniel Moore,1983-07-01,d.moore@email.com
 T003,Michael Brown,1988-11-30,m.brown@email.com

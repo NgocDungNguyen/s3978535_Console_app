@@ -583,36 +583,37 @@ public class ConsoleUI {
                 id = null;
             }
         }
-    
+
         String fullName = readUserInput("Enter full name: ");
         
         Date dateOfBirth = DateUtil.readDate(reader, "Enter date of birth (yyyy-MM-dd): ");
-    
+
         String contactInfo = null;
         while (contactInfo == null) {
             contactInfo = readUserInput("Enter contact information (email): ");
             if (!InputValidator.isValidEmail(contactInfo)) {
                 System.out.println(TableFormatter.ANSI_RED + "Invalid email format." + TableFormatter.ANSI_RESET);
                 contactInfo = null;
-            } else if (tenantManager.isEmailTaken(contactInfo)) {
-                System.out.println(TableFormatter.ANSI_RED + "This email is already in use by another tenant." + TableFormatter.ANSI_RESET);
-                contactInfo = null;
             }
         }
-    
-        Tenant tenant = new Tenant(id, fullName, dateOfBirth, contactInfo);
-        tenantManager.addTenant(tenant);
-        System.out.println(TableFormatter.ANSI_GREEN + "Tenant added successfully." + TableFormatter.ANSI_RESET);
-    
-        List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info");
-        List<List<String>> data = new ArrayList<>();
-        data.add(Arrays.asList(
-            tenant.getId(),
-            tenant.getFullName(),
-            tenant.getDateOfBirth().toString(),
-            tenant.getContactInformation()
-        ));
-        tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
+
+        try {
+            Tenant tenant = new Tenant(id, fullName, dateOfBirth, contactInfo);
+            tenantManager.addTenant(tenant);
+            System.out.println(TableFormatter.ANSI_GREEN + "Tenant added successfully." + TableFormatter.ANSI_RESET);
+
+            List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info");
+            List<List<String>> data = new ArrayList<>();
+            data.add(Arrays.asList(
+                tenant.getId(),
+                tenant.getFullName(),
+                tenant.getDateOfBirth().toString(),
+                tenant.getContactInformation()
+            ));
+            tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
+        } catch (IllegalArgumentException e) {
+            System.out.println(TableFormatter.ANSI_RED + "Error: " + e.getMessage() + TableFormatter.ANSI_RESET);
+        }
     }
 
     private void updateTenant() {
@@ -637,18 +638,15 @@ public class ConsoleUI {
                 if (dateOfBirth != null) {
                     tenant.setDateOfBirth(dateOfBirth);
                 }
+
                 String contactInfo = readUserInput("Enter new contact information (email, press enter to keep current): ");
-    if (!contactInfo.isEmpty()) {
-        if (InputValidator.isValidEmail(contactInfo)) {
-            if (!contactInfo.equalsIgnoreCase(tenant.getContactInformation()) && tenantManager.isEmailTaken(contactInfo)) {
-                System.out.println(TableFormatter.ANSI_RED + "This email is already in use by another tenant. Contact information not updated." + TableFormatter.ANSI_RESET);
-            } else {
-                tenant.setContactInformation(contactInfo);
-            }
-        } else {
-            System.out.println(TableFormatter.ANSI_RED + "Invalid email format. Contact information not updated." + TableFormatter.ANSI_RESET);
-        }
-    }
+                if (!contactInfo.isEmpty()) {
+                    if (InputValidator.isValidEmail(contactInfo)) {
+                        tenant.setContactInformation(contactInfo);
+                    } else {
+                        throw new IllegalArgumentException("Invalid email format.");
+                    }
+                }
 
                 tenantManager.updateTenant(tenant);
                 System.out.println(TableFormatter.ANSI_GREEN + "Tenant updated successfully." + TableFormatter.ANSI_RESET);
@@ -664,7 +662,7 @@ public class ConsoleUI {
                 tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
                 break;
             } catch (IllegalArgumentException e) {
-                System.out.println(TableFormatter.ANSI_RED + e.getMessage() + TableFormatter.ANSI_RESET);
+                System.out.println(TableFormatter.ANSI_RED + "Error: " + e.getMessage() + TableFormatter.ANSI_RESET);
                 System.out.println("Would you like to try again? (y/n)");
                 String retry = readUserInput("").toLowerCase();
                 if (!retry.equals("y")) {
@@ -770,20 +768,31 @@ public class ConsoleUI {
 
         String fullName = readUserInput("Enter full name: ");
         Date dateOfBirth = DateUtil.readDate(reader, "Enter date of birth (yyyy-MM-dd): ");
-        String contactInfo = readUserInput("Enter contact information: ");
+        String contactInfo = null;
+        while (contactInfo == null) {
+            contactInfo = readUserInput("Enter contact information (email): ");
+            if (!InputValidator.isValidEmail(contactInfo)) {
+                System.out.println(TableFormatter.ANSI_RED + "Invalid email format." + TableFormatter.ANSI_RESET);
+                contactInfo = null;
+            }
+        }
 
-        Host host = new Host(id, fullName, dateOfBirth, contactInfo);
-        hostManager.addHost(host);
+        try {
+            Host host = new Host(id, fullName, dateOfBirth, contactInfo);
+            hostManager.addHost(host);
 
-        System.out.println(TableFormatter.ANSI_GREEN + "Host added successfully." + TableFormatter.ANSI_RESET);
-        List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info");
-        List<List<String>> data = Arrays.asList(Arrays.asList(
-            host.getId(),
-            host.getFullName(),
-            host.getDateOfBirth().toString(),
-            host.getContactInformation()
-        ));
-        tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
+            System.out.println(TableFormatter.ANSI_GREEN + "Host added successfully." + TableFormatter.ANSI_RESET);
+            List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info");
+            List<List<String>> data = Arrays.asList(Arrays.asList(
+                host.getId(),
+                host.getFullName(),
+                host.getDateOfBirth().toString(),
+                host.getContactInformation()
+            ));
+            tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
+        } catch (IllegalArgumentException e) {
+            System.out.println(TableFormatter.ANSI_RED + "Error: " + e.getMessage() + TableFormatter.ANSI_RESET);
+        }
     }
 
     private void updateHost() {
@@ -809,9 +818,13 @@ public class ConsoleUI {
                     host.setDateOfBirth(dateOfBirth);
                 }
 
-                String contactInfo = readUserInput("Enter new contact information (press enter to keep current): ");
+                String contactInfo = readUserInput("Enter new contact information (email, press enter to keep current): ");
                 if (!contactInfo.isEmpty()) {
-                    host.setContactInformation(contactInfo);
+                    if (InputValidator.isValidEmail(contactInfo)) {
+                        host.setContactInformation(contactInfo);
+                    } else {
+                        throw new IllegalArgumentException("Invalid email format.");
+                    }
                 }
 
                 hostManager.updateHost(host);
@@ -826,7 +839,7 @@ public class ConsoleUI {
                 tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
                 break;
             } catch (IllegalArgumentException e) {
-                System.out.println(TableFormatter.ANSI_RED + e.getMessage() + TableFormatter.ANSI_RESET);
+                System.out.println(TableFormatter.ANSI_RED + "Error: " + e.getMessage() + TableFormatter.ANSI_RESET);
                 System.out.println("Would you like to try again? (y/n)");
                 String retry = readUserInput("").toLowerCase();
                 if (!retry.equals("y")) {
@@ -1151,6 +1164,102 @@ public class ConsoleUI {
                 ));
             }
             tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
+        }
+    }
+
+    private void addOwner() {
+        String id = null;
+        while (id == null) {
+            id = readUserInput("Enter owner ID (or 'back' to return): ");
+            if (id.equalsIgnoreCase("back")) {
+                return;
+            }
+            if (ownerManager.getOwner(id) != null) {
+                System.out.println(TableFormatter.ANSI_RED + "Owner with ID " + id + " already exists." + TableFormatter.ANSI_RESET);
+                id = null;
+            }
+        }
+
+        String fullName = readUserInput("Enter full name: ");
+        Date dateOfBirth = DateUtil.readDate(reader, "Enter date of birth (yyyy-MM-dd): ");
+        String contactInfo = null;
+        while (contactInfo == null) {
+            contactInfo = readUserInput("Enter contact information (email): ");
+            if (!InputValidator.isValidEmail(contactInfo)) {
+                System.out.println(TableFormatter.ANSI_RED + "Invalid email format." + TableFormatter.ANSI_RESET);
+                contactInfo = null;
+            }
+        }
+
+        try {
+            Owner owner = new Owner(id, fullName, dateOfBirth, contactInfo);
+            ownerManager.addOwner(owner);
+
+            System.out.println(TableFormatter.ANSI_GREEN + "Owner added successfully." + TableFormatter.ANSI_RESET);
+            List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info");
+            List<List<String>> data = Arrays.asList(Arrays.asList(
+                owner.getId(),
+                owner.getFullName(),
+                owner.getDateOfBirth().toString(),
+                owner.getContactInformation()
+            ));
+            tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
+        } catch (IllegalArgumentException e) {
+            System.out.println(TableFormatter.ANSI_RED + "Error: " + e.getMessage() + TableFormatter.ANSI_RESET);
+        }
+    }
+
+    private void updateOwner() {
+        while (true) {
+            String id = readUserInput("Enter owner ID to update (or 'back' to return): ");
+            if (id.equalsIgnoreCase("back")) {
+                return;
+            }
+
+            try {
+                Owner owner = ownerManager.getOwner(id);
+                if (owner == null) {
+                    throw new IllegalArgumentException("Owner not found.");
+                }
+
+                String fullName = readUserInput("Enter new full name (press enter to keep current): ");
+                if (!fullName.isEmpty()) {
+                    owner.setFullName(fullName);
+                }
+
+                Date dateOfBirth = DateUtil.readOptionalDate(reader, "Enter new date of birth (yyyy-MM-dd, press enter to keep current): ");
+                if (dateOfBirth != null) {
+                    owner.setDateOfBirth(dateOfBirth);
+                }
+
+                String contactInfo = readUserInput("Enter new contact information (email, press enter to keep current): ");
+                if (!contactInfo.isEmpty()) {
+                    if (InputValidator.isValidEmail(contactInfo)) {
+                        owner.setContactInformation(contactInfo);
+                    } else {
+                        throw new IllegalArgumentException("Invalid email format.");
+                    }
+                }
+
+                ownerManager.updateOwner(owner);
+                System.out.println(TableFormatter.ANSI_GREEN + "Owner updated successfully." + TableFormatter.ANSI_RESET);
+                List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info");
+                List<List<String>> data = Arrays.asList(Arrays.asList(
+                    owner.getId(),
+                    owner.getFullName(),
+                    owner.getDateOfBirth().toString(),
+                    owner.getContactInformation()
+                ));
+                tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.println(TableFormatter.ANSI_RED + "Error: " + e.getMessage() + TableFormatter.ANSI_RESET);
+                System.out.println("Would you like to try again? (y/n)");
+                String retry = readUserInput("").toLowerCase();
+                if (!retry.equals("y")) {
+                    return;
+                }
+            }
         }
     }
 

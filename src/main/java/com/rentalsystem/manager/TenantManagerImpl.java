@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.rentalsystem.model.Tenant;
 import com.rentalsystem.util.FileHandler;
+import com.rentalsystem.util.InputValidator;
 
 public class TenantManagerImpl implements TenantManager {
     private Map<String, Tenant> tenants;
@@ -36,18 +37,30 @@ public class TenantManagerImpl implements TenantManager {
 
     @Override
     public void addTenant(Tenant tenant) {
+        if (!InputValidator.isValidEmail(tenant.getContactInformation())) {
+            throw new IllegalArgumentException("Invalid email format for tenant: " + tenant.getContactInformation());
+        }
+        if (isEmailTaken(tenant.getContactInformation())) {
+            throw new IllegalArgumentException("Email already in use: " + tenant.getContactInformation());
+        }
         tenants.put(tenant.getId(), tenant);
         saveTenants();
     }
 
     @Override
     public void updateTenant(Tenant tenant) {
-        if (tenants.containsKey(tenant.getId())) {
-            tenants.put(tenant.getId(), tenant);
-            saveTenants();
-        } else {
+        if (!InputValidator.isValidEmail(tenant.getContactInformation())) {
+            throw new IllegalArgumentException("Invalid email format for tenant: " + tenant.getContactInformation());
+        }
+        Tenant existingTenant = tenants.get(tenant.getId());
+        if (existingTenant == null) {
             throw new IllegalArgumentException("Tenant with ID " + tenant.getId() + " does not exist.");
         }
+        if (!existingTenant.getContactInformation().equals(tenant.getContactInformation()) && isEmailTaken(tenant.getContactInformation())) {
+            throw new IllegalArgumentException("Email already in use: " + tenant.getContactInformation());
+        }
+        tenants.put(tenant.getId(), tenant);
+        saveTenants();
     }
 
     @Override
