@@ -38,7 +38,7 @@ public class TenantManagerImpl implements TenantManager {
     @Override
     public void addTenant(Tenant tenant) {
         if (!InputValidator.isValidEmail(tenant.getContactInformation())) {
-            throw new IllegalArgumentException("Invalid email format for tenant: " + tenant.getContactInformation());
+            throw new IllegalArgumentException("Invalid email format.");
         }
         if (isEmailTaken(tenant.getContactInformation())) {
             throw new IllegalArgumentException("Email already in use: " + tenant.getContactInformation());
@@ -47,9 +47,10 @@ public class TenantManagerImpl implements TenantManager {
         saveTenants();
     }
 
+
     @Override
     public void updateTenant(Tenant tenant) {
-        if (!InputValidator.isValidEmail(tenant.getContactInformation())) {
+        if (!isValidEmail(tenant.getContactInformation())) {
             throw new IllegalArgumentException("Invalid email format for tenant: " + tenant.getContactInformation());
         }
         Tenant existingTenant = tenants.get(tenant.getId());
@@ -86,11 +87,19 @@ public class TenantManagerImpl implements TenantManager {
     public List<Tenant> searchTenants(String keyword) {
         final String lowercaseKeyword = keyword.toLowerCase();
         return tenants.values().stream()
-                .filter(tenant -> 
-                    tenant.getFullName().toLowerCase().contains(lowercaseKeyword) ||
-                    tenant.getId().toLowerCase().contains(lowercaseKeyword) ||
-                    tenant.getContactInformation().toLowerCase().contains(lowercaseKeyword))
+                .filter(tenant ->
+                        tenant.getFullName().toLowerCase().contains(lowercaseKeyword) ||
+                                tenant.getId().toLowerCase().contains(lowercaseKeyword) ||
+                                tenant.getContactInformation().toLowerCase().contains(lowercaseKeyword))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Tenant getTenantByEmail(String email) {
+        return tenants.values().stream()
+                .filter(tenant -> tenant.getContactInformation().equalsIgnoreCase(email))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override
@@ -98,5 +107,25 @@ public class TenantManagerImpl implements TenantManager {
         final String lowercaseEmail = email.toLowerCase();
         return tenants.values().stream()
                 .anyMatch(tenant -> tenant.getContactInformation().toLowerCase().equals(lowercaseEmail));
+    }
+
+    @Override
+    public boolean updateTenant(Tenant tenant, String newEmail) {
+        if (!isValidEmail(newEmail)) {
+            throw new IllegalArgumentException("Invalid email format for tenant: " + newEmail);
+        }
+        Tenant existingTenant = getTenantByEmail(newEmail);
+        if (existingTenant != null && !existingTenant.getId().equals(tenant.getId())) {
+            throw new IllegalArgumentException("Email is already in use by another tenant.");
+        }
+        tenant.setContactInformation(newEmail);
+        tenants.put(tenant.getId(), tenant);
+        saveTenants();
+        return true;
+    }
+
+    public static boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        return email != null && email.matches(emailRegex);
     }
 }

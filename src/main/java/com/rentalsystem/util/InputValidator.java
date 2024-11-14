@@ -1,7 +1,6 @@
 package com.rentalsystem.util;
 
 import java.util.regex.Pattern;
-
 import org.jline.reader.LineReader;
 
 public class InputValidator {
@@ -17,7 +16,7 @@ public class InputValidator {
     }
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-        "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
+            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
     );
 
     public static boolean isValidEmail(String email) {

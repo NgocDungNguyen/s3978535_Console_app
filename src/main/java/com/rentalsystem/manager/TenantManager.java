@@ -12,4 +12,6 @@ public interface TenantManager {
     List<Tenant> getAllTenants();
     List<Tenant> searchTenants(String keyword);
     boolean isEmailTaken(String email);
+    Tenant getTenantByEmail(String email);
+    boolean updateTenant(Tenant tenant, String newEmail);
 }
