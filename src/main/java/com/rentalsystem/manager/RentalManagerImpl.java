@@ -10,10 +10,15 @@ public class RentalManagerImpl implements RentalManager {
     private Map<String, RentalAgreement> rentalAgreements;
     private FileHandler fileHandler;
     private TenantManager tenantManager;
+    private PropertyManager propertyManager;
+    private HostManager hostManager;
+    private OwnerManager ownerManager;
 
-    public RentalManagerImpl(FileHandler fileHandler, TenantManager tenantManager) {
-        this.fileHandler = fileHandler;
+    public RentalManagerImpl(FileHandler fileHandler, TenantManager tenantManager, PropertyManager propertyManager, HostManager hostManager, OwnerManager ownerManager) {        this.fileHandler = fileHandler;
         this.tenantManager = tenantManager;
+        this.propertyManager = propertyManager;
+        this.hostManager = hostManager;
+        this.ownerManager = ownerManager;
         this.rentalAgreements = new HashMap<>();
         loadRentalAgreements();
     }
@@ -22,6 +27,12 @@ public class RentalManagerImpl implements RentalManager {
         List<RentalAgreement> loadedAgreements = fileHandler.loadRentalAgreements();
         for (RentalAgreement agreement : loadedAgreements) {
             rentalAgreements.put(agreement.getAgreementId(), agreement);
+
+            // Associate the agreement with the tenant
+            Tenant tenant = tenantManager.getTenant(agreement.getMainTenant().getId());
+            if (tenant != null) {
+                tenant.addRentalAgreement(agreement);
+            }
         }
     }
 
@@ -31,6 +42,14 @@ public class RentalManagerImpl implements RentalManager {
             throw new IllegalArgumentException("Rental agreement with ID " + agreement.getAgreementId() + " already exists.");
         }
         rentalAgreements.put(agreement.getAgreementId(), agreement);
+
+        // Update related entities
+        agreement.getProperty().setCurrentTenant(agreement.getMainTenant());
+        agreement.getProperty().addRentalAgreement(agreement);
+        agreement.getMainTenant().addRentalAgreement(agreement);
+        agreement.getHost().addManagedAgreement(agreement);
+        agreement.getOwner().addRentalAgreement(agreement);
+
         saveRentalAgreements();
     }
 

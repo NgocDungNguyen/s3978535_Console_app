@@ -15,6 +15,7 @@ public class Host extends Person {
     }
 
     public List<Property> getManagedProperties() {
+        System.out.println("Host " + getId() + " has " + managedProperties.size() + " managed properties");
         return new ArrayList<>(managedProperties);
     }
 
@@ -25,23 +26,9 @@ public class Host extends Person {
     }
 
     public void removeManagedProperty(Property property) {
-        managedProperties.remove(property);
-    }
-
-    public Set<Owner> getCooperatingOwners() {
-        return new HashSet<>(cooperatingOwners);
-    }
-
-    public void addCooperatingOwner(Owner owner) {
-        cooperatingOwners.add(owner);
-    }
-
-    public void removeCooperatingOwner(Owner owner) {
-        cooperatingOwners.remove(owner);
-    }
-
-    public List<RentalAgreement> getManagedAgreements() {
-        return new ArrayList<>(managedAgreements);
+        if (managedProperties.remove(property)) {
+            property.setHost(null);
+        }
     }
 
     public void addManagedAgreement(RentalAgreement agreement) {
@@ -52,6 +39,25 @@ public class Host extends Person {
 
     public void removeManagedAgreement(RentalAgreement agreement) {
         managedAgreements.remove(agreement);
+    }
+
+    public List<RentalAgreement> getManagedAgreements() {
+        return new ArrayList<>(managedAgreements);
+    }
+
+    public Set<Owner> getCooperatingOwners() {
+        return new HashSet<>(cooperatingOwners);
+    }
+
+    public void addCooperatingOwner(Owner owner) {
+        cooperatingOwners.add(owner);
+        owner.addManagingHost(this);
+    }
+
+    public void removeCooperatingOwner(Owner owner) {
+        if (cooperatingOwners.remove(owner)) {
+            owner.removeManagingHost(this);
+        }
     }
 
     @Override

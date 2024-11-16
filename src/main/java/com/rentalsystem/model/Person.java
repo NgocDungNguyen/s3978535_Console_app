@@ -71,4 +71,6 @@ public abstract class Person {
                 ", contactInformation='" + contactInformation + '\'' +
                 '}';
     }
+
+    public abstract void addManagedAgreement(RentalAgreement agreement);
 }

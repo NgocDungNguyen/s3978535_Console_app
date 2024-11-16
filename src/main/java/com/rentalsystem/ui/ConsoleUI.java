@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
@@ -553,13 +554,15 @@ public class ConsoleUI {
         if (agreements.isEmpty()) {
             System.out.println(TableFormatter.ANSI_YELLOW + "No rental agreements found." + TableFormatter.ANSI_RESET);
         } else {
-            List<String> headers = Arrays.asList("ID", "Property", "Tenant", "Start Date", "End Date", "Rent Amount", "Status");
+            List<String> headers = Arrays.asList("ID", "Property", "Tenant", "Owner", "Host", "Start Date", "End Date", "Rent Amount", "Status");
             List<List<String>> data = new ArrayList<>();
             for (RentalAgreement agreement : agreements) {
                 data.add(Arrays.asList(
                         agreement.getAgreementId(),
                         agreement.getProperty().getPropertyId(),
                         agreement.getMainTenant().getFullName(),
+                        agreement.getOwner().getFullName(),
+                        agreement.getHost().getFullName(),
                         agreement.getStartDate().toString(),
                         agreement.getEndDate().toString(),
                         String.format("%.2f", agreement.getRentAmount()),
@@ -569,6 +572,7 @@ public class ConsoleUI {
             tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
         }
     }
+
 
     private void searchRentalAgreements() {
         String keyword = readUserInput("Enter search keyword: ");
@@ -907,7 +911,9 @@ public class ConsoleUI {
                         host.getFullName(),
                         host.getDateOfBirth().toString(),
                         host.getContactInformation(),
-                        String.valueOf(host.getManagedProperties().size())
+                        host.getManagedProperties().stream()
+                                .map(Property::getPropertyId)
+                                .collect(Collectors.joining(", "))
                 ));
             }
             tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
@@ -1130,10 +1136,11 @@ public class ConsoleUI {
 
     private void listProperties() {
         List<Property> properties = propertyManager.getAllProperties();
+        System.out.println("Retrieved " + properties.size() + " properties from PropertyManager");
         if (properties.isEmpty()) {
             System.out.println(TableFormatter.ANSI_YELLOW + "No properties found." + TableFormatter.ANSI_RESET);
         } else {
-            List<String> headers = Arrays.asList("ID", "Type", "Address", "Price", "Status", "Owner");
+            List<String> headers = Arrays.asList("ID", "Type", "Address", "Price", "Status", "Owner", "Host", "Current Tenant");
             List<List<String>> data = new ArrayList<>();
             for (Property property : properties) {
                 data.add(Arrays.asList(
@@ -1142,7 +1149,9 @@ public class ConsoleUI {
                         property.getAddress(),
                         String.format("%.2f", property.getPrice()),
                         property.getStatus().toString(),
-                        property.getOwner().getFullName()
+                        property.getOwner().getId() + " - " + property.getOwner().getFullName(),
+                        property.getHost() != null ? property.getHost().getId() + " - " + property.getHost().getFullName() : "N/A",
+                        property.getCurrentTenant() != null ? property.getCurrentTenant().getId() + " - " + property.getCurrentTenant().getFullName() : "N/A"
                 ));
             }
             tableFormatter.printDataTable(headers, data, TableFormatter.ANSI_CYAN);
@@ -1370,7 +1379,9 @@ public class ConsoleUI {
         List<String> headers = Arrays.asList("ID", "Name", "Date of Birth", "Contact Info", "Active Agreements");
         List<List<String>> data = new ArrayList<>();
         for (Tenant tenant : tenants) {
-            int activeAgreements = tenant.getRentalAgreements().size();
+            int activeAgreements = (int) tenant.getRentalAgreements().stream()
+                    .filter(a -> a.getStatus() == RentalAgreement.Status.ACTIVE)
+                    .count();
             data.add(Arrays.asList(
                     tenant.getId(),
                     tenant.getFullName(),
@@ -1385,11 +1396,11 @@ public class ConsoleUI {
     public static void main(String[] args) {
         try {
             FileHandler fileHandler = new FileHandler();
+            HostManager hostManager = new HostManagerImpl(fileHandler);
             TenantManager tenantManager = new TenantManagerImpl(fileHandler);
             OwnerManager ownerManager = new OwnerManagerImpl(fileHandler);
-            HostManager hostManager = new HostManagerImpl(fileHandler);
-            PropertyManager propertyManager = new PropertyManagerImpl(fileHandler);
-            RentalManager rentalManager = new RentalManagerImpl(fileHandler, tenantManager);
+            PropertyManager propertyManager = new PropertyManagerImpl(fileHandler, hostManager, tenantManager, ownerManager);
+            RentalManager rentalManager = new RentalManagerImpl(fileHandler, tenantManager, propertyManager, hostManager, ownerManager);
 
             ConsoleUI consoleUI = new ConsoleUI(rentalManager, tenantManager, ownerManager, hostManager, propertyManager);
             consoleUI.start();
@@ -1399,16 +1410,3 @@ public class ConsoleUI {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

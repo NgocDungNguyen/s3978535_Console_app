@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.rentalsystem.model.Tenant;
+import com.rentalsystem.model.RentalAgreement;
 import com.rentalsystem.util.FileHandler;
 import com.rentalsystem.util.InputValidator;
 
@@ -21,10 +22,18 @@ public class TenantManagerImpl implements TenantManager {
     }
 
     private void loadTenants() {
-        List<String> lines = fileHandler.readLines("tenants.txt");
-        for (String line : lines) {
-            Tenant tenant = Tenant.fromString(line);
+        List<Tenant> loadedTenants = fileHandler.loadTenants();
+        for (Tenant tenant : loadedTenants) {
             tenants.put(tenant.getId(), tenant);
+        }
+
+        // Load rental agreements for each tenant
+        List<RentalAgreement> agreements = fileHandler.loadRentalAgreements();
+        for (RentalAgreement agreement : agreements) {
+            Tenant tenant = tenants.get(agreement.getMainTenant().getId());
+            if (tenant != null) {
+                tenant.addRentalAgreement(agreement);
+            }
         }
     }
 

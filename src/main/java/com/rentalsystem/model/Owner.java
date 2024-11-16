@@ -44,6 +44,22 @@ public class Owner extends Person {
         return new ArrayList<>(rentalAgreements);
     }
 
+    @Override
+    public void addManagedAgreement(RentalAgreement agreement) {
+        if (!rentalAgreements.contains(agreement)) {
+            rentalAgreements.add(agreement);
+        }
+    }
+
+    // You might want to add these methods as well
+    public void removeManagedAgreement(RentalAgreement agreement) {
+        rentalAgreements.remove(agreement);
+    }
+
+    public List<RentalAgreement> getManagedAgreements() {
+        return new ArrayList<>(rentalAgreements);
+    }
+
     public void addRentalAgreement(RentalAgreement agreement) {
         if (!rentalAgreements.contains(agreement)) {
             rentalAgreements.add(agreement);

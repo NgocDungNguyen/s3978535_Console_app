@@ -18,6 +18,10 @@ public class Payment {
         this.paymentMethod = paymentMethod;
         this.rentalAgreement = rentalAgreement;
         this.tenant = tenant;
+
+        // Update related entities
+        rentalAgreement.addPayment(this);
+        tenant.addPaymentTransaction(this);
     }
 
     // Getters and setters for all fields
